@@ -13,7 +13,13 @@ namespace SudokuSolver
 {
     public partial class SolverUI : Form
     {
+        private static readonly string CLEAR_LABEL = "Clear";
+        private static readonly string CANCEL_LABEL = "Cancel";
+        private static readonly string NOT_SOLVEABLE_MESSAGE = "This puzzle is not solveable!";
+
         private TextBox[] Cells { get; set; }
+
+        private Thread ProcessingThread { get; set; }
 
         public SolverUI()
         {
@@ -21,6 +27,7 @@ namespace SudokuSolver
 
             this.Load += (sender, e) =>
             {
+                this.speedSlider.Value = this.speedSlider.Maximum;
                 this.Cells = this.GetCellsFromUI();
 
                 foreach (var cell in this.Cells)
@@ -43,20 +50,28 @@ namespace SudokuSolver
             int delay = this.speedSlider.Maximum - this.speedSlider.Value;
             this.SetupSolverCallback(solver, delay);
 
-            this.speedSlider.Enabled = false;
-            this.clearButton.Enabled = false;
+            this.speedSlider.Enabled = false;            
             this.solveButton.Enabled = false;
 
-            new Thread(new ThreadStart(() =>
+            this.ProcessingThread = new Thread(new ThreadStart(() =>
             {
                 // solve the puzzle!
-                solver.Solve();
+                if (!solver.Solve())
+                {
+                    MessageBox.Show(NOT_SOLVEABLE_MESSAGE);
+                }
 
-                this.EnableControl(this.speedSlider);
-                this.EnableControl(this.clearButton);
+                this.EnableControl(this.speedSlider);                
                 this.EnableControl(this.solveButton);
-                
-            })).Start();            
+
+                this.clearButton.Invoke(new Action(() =>
+                {
+                    this.clearButton.Text = CLEAR_LABEL;
+                }));
+            }));
+
+            this.clearButton.Text = CANCEL_LABEL;
+            this.ProcessingThread.Start();
         }
 
         private void EnableControl(Control control)
@@ -93,8 +108,8 @@ namespace SudokuSolver
                 if (!string.IsNullOrEmpty(this.Cells[i].Text))
                 {
                     // mark cell as supplied
-                    var row = i / 9;
-                    var col = i % 9;
+                    var row = i / puzzle.CurrentBoard.Length;
+                    var col = i % puzzle.CurrentBoard.Length;
                     var value = (SudokuValue)Enum.ToObject(typeof(SudokuValue), int.Parse(this.Cells[i].Text));
 
                     puzzle.SetValue(row, col, value);
@@ -120,9 +135,17 @@ namespace SudokuSolver
 
         private void clearButton_Click(object sender, EventArgs e)
         {
-            foreach(var control in this.Cells)
+            if (this.clearButton.Text == CLEAR_LABEL)
             {
-                control.Text = string.Empty;
+                foreach (var control in this.Cells)
+                {
+                    control.Text = string.Empty;
+                }
+            }
+            else
+            {
+                this.ProcessingThread.Abort();
+                this.clearButton.Text = CLEAR_LABEL;
             }
         }
     }
