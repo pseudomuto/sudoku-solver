@@ -2,8 +2,9 @@
 from sudoku_puzzle import *
 
 class SudokuSolver(object):
-    def __init__(self, puzzle):
+    def __init__(self, puzzle, callback = None):
         self.puzzle = puzzle
+        self.callback = callback
 
     def solve(self):
         row, col = 0, 0
@@ -18,8 +19,18 @@ class SudokuSolver(object):
 
         for option in choices:
             self.puzzle.setValue(row, col, option)
+            self.notify()
+            
             if self.solve(): return True
+
             self.puzzle.setValue(row, col, '0')
+            self.notify()
+
+        return False
+
+    def notify(self):
+        if self.callback != None:
+            self.callback(self.puzzle)
 
     def getChoices(self, row, col):
         choices = []
