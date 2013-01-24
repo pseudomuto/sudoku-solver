@@ -9,18 +9,23 @@ from model.sudoku_solver import *
 import threading
 
 class SolverThread(threading.Thread):
+    """A thread class for running a SudokuSolver object"""
     # callback should be a function taking a puzzle (solved) and a bool (success)
     def __init__(self, puzzle, callback):
+        """Initializes a new SolverThread
+        """
         threading.Thread.__init__(self)        
         self.puzzle = puzzle
         self.callback = callback
 
     def run(self):        
+        """Attempt to solve the puzzle and notify the callback during execution and when complete"""
         solver = SudokuSolver(self.puzzle, self.notify)
         isSolved = solver.solve()
         self.notify(self.puzzle, isSolved)
 
     def notify(self, puzzle, solved = False):
+        """Notify the callback that the puzzle has changed"""
         self.callback(puzzle, solved)
 
 class AppWindow(Frame):
@@ -52,8 +57,6 @@ class AppWindow(Frame):
         self.pack(fill=BOTH)
 
     def solverCallback(self, puzzle, isSolved):
-        print "Handling callback"
-        print puzzle
         self.board.setPuzzle(puzzle)        
 
     def clearGrid(self, data = None):        
@@ -61,7 +64,5 @@ class AppWindow(Frame):
 
     def solveGrid(self, data = None):
         puzzle = self.board.getPuzzle()
-        print puzzle
-
         thread = SolverThread(puzzle, self.solverCallback)
         thread.start()

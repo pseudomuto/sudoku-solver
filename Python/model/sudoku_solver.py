@@ -2,11 +2,19 @@
 from sudoku_puzzle import *
 
 class SudokuSolver(object):
+    """A class that implements a recursive backtracking algorithm to solve a SudokuPuzzle"""
+
     def __init__(self, puzzle, callback = None):
+        """Initializes a solver
+
+        puzzle: The puzzle to solve
+        callback: An optional callback method that will be called whenever a cell's value changes
+        """
         self.puzzle = puzzle
         self.callback = callback
 
     def solve(self):
+        """Attempts to solve the puzzle and returns whether or not it was successful"""
         row, col = 0, 0
         cell = self.getNextCell()
 
@@ -29,10 +37,12 @@ class SudokuSolver(object):
         return False
 
     def notify(self):
+        """Notified callback if it was supplied in the constructor"""
         if self.callback != None:
             self.callback(self.puzzle)
 
     def getChoices(self, row, col):
+        """Determines which values are valid for the specified cell and returns a list"""
         choices = []
 
         for option in xrange(1, 10):
@@ -42,6 +52,7 @@ class SudokuSolver(object):
         return choices
 
     def getNextCell(self):
+        """Finds the next empty cell and returns a tuple (x, y). If not found None will be returned"""
         for i in xrange(9):
             for j in xrange(9):
                 if self.puzzle.board[i][j] == '0':
